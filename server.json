@@ -1,0 +1,11 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "in.ansvar/india-trai-regulation-mcp",
+  "description": "Query Telecom Regulatory Authority of India (TRAI) regulations, directions, orders, and consumer protection rules for the Indian telecommunications sector",
+  "repository": { "url": "https://github.com/Ansvar-Systems/india-trai-regulation-mcp", "source": "github" },
+  "homepage": "https://ansvar.eu",
+  "version": "0.1.0",
+  "license": "BSL-1.1",
+  "keywords": ["trai", "telecom", "india", "regulation", "compliance", "mcp", "ansvar"],
+  "packages": [{ "registryType": "npm", "identifier": "@ansvar/india-trai-regulation-mcp", "version": "0.1.0", "transport": { "type": "stdio" } }]
+}

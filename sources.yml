@@ -1,0 +1,22 @@
+schema_version: "1.0"
+mcp_name: "India TRAI Telecom Regulation MCP"
+category: "regulation"
+
+sources:
+  - name: "TRAI Regulations, Directions & Orders"
+    authority: "Telecom Regulatory Authority of India (TRAI)"
+    official_portal: "https://www.trai.gov.in/release-publication/regulations"
+    retrieval_method: "HTML_SCRAPE"
+    format: "HTML + PDF"
+    authentication: "none"
+    update_frequency: "monthly"
+    license:
+      type: "government_terms"
+      url: "https://www.trai.gov.in"
+      summary: "Public TRAI telecom regulatory publications"
+    coverage:
+      scope: "TRAI Regulations, Directions, Orders; Quality of Service Regulations; Telecom Consumer Protection Regulations; Unsolicited Commercial Communications Regulations (UCC); Consumer Grievance Redressal; Telecom Tariff Orders"
+      version: "Current"
+      item_count: "~100-150 regulations, ~200 directions"
+    languages:
+      - "en"
