@@ -1,0 +1,14 @@
+node_modules/
+dist/
+# SQLite WAL/SHM sidecars (the committed snapshot is data/trai.db itself,
+# tracked explicitly via `git add -f` when seeded for releases)
+data/*.db-shm
+data/*.db-wal
+data/raw/
+data/parsed/
+.ingest-*
+.freshness-*
+.source-hashes.json
+*.tgz
+# Local audit / scratch
+/tmp/
