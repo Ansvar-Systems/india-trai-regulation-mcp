@@ -37,6 +37,11 @@ const RETRY_BACKOFF_BASE_MS = 2000;
 const REQUEST_TIMEOUT_MS = 60_000;
 const USER_AGENT = "Ansvar-MCP/1.0 (regulatory-data-ingestion; https://ansvar.eu)";
 
+// Pagination hard cap per source (safety fuse). TRAI uses Drupal paging
+// (?page=N, zero-indexed). Regulations max observed: page=11 (12 pages).
+// Directions max observed: page=13 (14 pages). Orders listings are single-page.
+const MAX_PAGES_PER_SOURCE = 20;
+
 // Keywords to identify telecom regulatory documents
 const TELECOM_KEYWORDS = [
   "quality of service",
@@ -162,7 +167,7 @@ function isRelevant(title: string): boolean {
 }
 
 async function scrapePortalPage(url: string, category: string): Promise<DocumentLink[]> {
-  console.log(`Fetching TRAI portal page: ${url}`);
+  console.log(`  Fetching TRAI portal page: ${url}`);
   const response = await fetchWithRetry(url);
   const html = await response.text();
   const $ = cheerio.load(html);
@@ -228,24 +233,107 @@ async function scrapePortalPage(url: string, category: string): Promise<Document
   return links;
 }
 
-async function scrapeAllPortals(): Promise<DocumentLink[]> {
-  const all: DocumentLink[] = [];
+/**
+ * Scrape all pages of a single TRAI listing portal using Drupal `?page=N`
+ * pagination. TRAI pages are 0-indexed (page=0 is the first page, which is
+ * also what the listing URL without `?page` returns).
+ *
+ * Stops when a page returns zero new DocumentLinks (either no `title-number`
+ * items on the page, or every extracted PDF URL has already been seen on a
+ * prior page) or when MAX_PAGES_PER_SOURCE is reached.
+ *
+ * Rate limit is honoured between every page fetch to respect the Indian
+ * government portal.
+ */
+async function scrapePortalAllPages(
+  baseUrl: string,
+  category: string,
+  seenUrls: Set<string>,
+): Promise<{ links: DocumentLink[]; pagesFetched: number }> {
+  const collected: DocumentLink[] = [];
+  let pagesFetched = 0;
+  let consecutiveFailures = 0;
+  // Tolerate up to 2 consecutive transient failures mid-pagination. Three in
+  // a row terminates the source (treated as end-of-range or genuine outage).
+  const MAX_CONSECUTIVE_FAILURES = 2;
 
-  const pages: Array<{ url: string; category: string }> = [
-    { url: REGULATIONS_URL, category: "Regulations" },
-    { url: DIRECTIONS_URL, category: "Directions" },
-    { url: ORDERS_TELECOM_URL, category: "Orders" },
-    { url: ORDERS_BROADCASTING_URL, category: "Orders" },
+  for (let page = 0; page < MAX_PAGES_PER_SOURCE; page++) {
+    const pageUrl = page === 0 ? baseUrl : `${baseUrl}?page=${page}`;
+
+    let pageLinks: DocumentLink[] = [];
+    let pageFailed = false;
+    try {
+      pageLinks = await scrapePortalPage(pageUrl, category);
+    } catch (err) {
+      pageFailed = true;
+      consecutiveFailures++;
+      console.error(
+        `  Error scraping ${pageUrl}: ${err instanceof Error ? err.message : String(err)} ` +
+          `(consecutive failures: ${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES + 1})`,
+      );
+      if (consecutiveFailures > MAX_CONSECUTIVE_FAILURES) {
+        console.error(
+          `  Aborting pagination for ${category} after ${consecutiveFailures} consecutive failures.`,
+        );
+        break;
+      }
+      // Backoff before trying the next page.
+      await sleep(RATE_LIMIT_MS * 2);
+      continue;
+    }
+
+    pagesFetched++;
+    consecutiveFailures = 0;
+
+    // Filter down to URLs we haven't already seen (cross-source dedupe).
+    const freshLinks = pageLinks.filter((l) => !seenUrls.has(l.url));
+    for (const l of freshLinks) seenUrls.add(l.url);
+
+    console.log(
+      `  Fetched page ${page + 1}/${MAX_PAGES_PER_SOURCE} (${category}): ${pageLinks.length} links on page, ${freshLinks.length} new`,
+    );
+    collected.push(...freshLinks);
+
+    // Stop when the page has no items OR no new items (exhausted the listing).
+    if (!pageFailed && (pageLinks.length === 0 || freshLinks.length === 0)) {
+      break;
+    }
+
+    // Rate limit between pages.
+    await sleep(RATE_LIMIT_MS);
+  }
+
+  return { links: collected, pagesFetched };
+}
+
+async function scrapeAllPortals(): Promise<{
+  links: DocumentLink[];
+  pagesBySource: Record<string, number>;
+}> {
+  const all: DocumentLink[] = [];
+  const seenUrls = new Set<string>();
+  const pagesBySource: Record<string, number> = {};
+
+  const sources: Array<{ url: string; category: string; key: string }> = [
+    { url: REGULATIONS_URL, category: "Regulations", key: "regulations" },
+    { url: DIRECTIONS_URL, category: "Directions", key: "directions" },
+    { url: ORDERS_TELECOM_URL, category: "Orders", key: "orders_telecom" },
+    { url: ORDERS_BROADCASTING_URL, category: "Orders", key: "orders_broadcasting" },
   ];
 
-  for (const page of pages) {
-    try {
-      const links = await scrapePortalPage(page.url, page.category);
-      console.log(`  Found ${links.length} documents in ${page.category}`);
-      all.push(...links);
-    } catch (err) {
-      console.error(`  Error scraping ${page.url}: ${err instanceof Error ? err.message : String(err)}`);
-    }
+  for (const source of sources) {
+    console.log(`\n=== Scraping ${source.category} (${source.url}) ===`);
+    const { links, pagesFetched } = await scrapePortalAllPages(
+      source.url,
+      source.category,
+      seenUrls,
+    );
+    pagesBySource[source.key] = pagesFetched;
+    console.log(
+      `  Total new documents in ${source.category}: ${links.length} (across ${pagesFetched} page(s))`,
+    );
+    all.push(...links);
+    // Rate limit between sources.
     await sleep(RATE_LIMIT_MS);
   }
 
@@ -253,10 +341,10 @@ async function scrapeAllPortals(): Promise<DocumentLink[]> {
   if (all.length === 0) {
     console.warn("  Warning: No links found via scraping. Portal may require JavaScript.");
     console.warn("  Falling back to known document list.");
-    return getKnownDocuments();
+    return { links: getKnownDocuments(), pagesBySource };
   }
 
-  return all;
+  return { links: all, pagesBySource };
 }
 
 function getKnownDocuments(): DocumentLink[] {
@@ -334,8 +422,10 @@ async function main(): Promise<void> {
     console.log(`Created directory: ${RAW_DIR}`);
   }
 
-  let documents = await scrapeAllPortals();
-  console.log(`Found ${documents.length} TRAI documents`);
+  const scrape = await scrapeAllPortals();
+  let documents = scrape.links;
+  console.log(`\nFound ${documents.length} TRAI documents across all paginated sources`);
+  console.log(`  Pages fetched: ${JSON.stringify(scrape.pagesBySource)}`);
 
   if (documents.length > fetchLimit) {
     documents = documents.slice(0, fetchLimit);
@@ -406,6 +496,7 @@ async function main(): Promise<void> {
     fetched: fetched.length,
     skipped,
     errors: documents.length - fetched.length - skipped,
+    pagesBySource: scrape.pagesBySource,
     documents: fetched.map((d) => ({
       title: d.title,
       filename: d.filename,

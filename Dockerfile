@@ -21,6 +21,8 @@ COPY tsconfig.json ./
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY sources.yml ./
+# server.json is the MCP manifest — required at both build and runtime
+COPY server.json ./
 
 # Build TypeScript
 RUN npm run build

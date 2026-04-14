@@ -1,0 +1,30 @@
+# Keep the Docker build context small and exclude anything the image
+# neither needs at build time (source is copied explicitly) nor at runtime.
+
+node_modules/
+dist/
+
+# Raw fetched PDFs and their meta files — the builder bakes the already
+# compiled SQLite DB, so /data/raw/ is never needed in the image.
+data/raw/
+data/parsed/
+data/.source-hashes.json
+
+# Tooling / CI / repo noise
+.git/
+.github/
+.vscode/
+*.log
+*.tgz
+.ingest-*
+.freshness-*
+
+# Docs not needed at runtime
+*.md
+!README.md
+
+# Test + lint scaffolding
+tests/
+vitest*.config.*
+.eslintrc*
+.prettierrc*
