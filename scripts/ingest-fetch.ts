@@ -28,9 +28,10 @@ import { join, basename } from "node:path";
 const BASE_URL = "https://www.trai.gov.in";
 const REGULATIONS_URL = `${BASE_URL}/release-publication/regulations`;
 const DIRECTIONS_URL = `${BASE_URL}/release-publication/directions`;
-const ORDERS_URL = `${BASE_URL}/release-publication/orders`;
+const ORDERS_TELECOM_URL = `${BASE_URL}/release-publication/consolidated-tariff-orders/telecom`;
+const ORDERS_BROADCASTING_URL = `${BASE_URL}/release-publication/consolidated-tariff-orders/broadcasting`;
 const RAW_DIR = "data/raw";
-const RATE_LIMIT_MS = 2000;
+const RATE_LIMIT_MS = 5000;
 const MAX_RETRIES = 3;
 const RETRY_BACKOFF_BASE_MS = 2000;
 const REQUEST_TIMEOUT_MS = 60_000;
@@ -168,22 +169,61 @@ async function scrapePortalPage(url: string, category: string): Promise<Document
 
   const links: DocumentLink[] = [];
 
-  // TRAI's portal uses anchor tags with href pointing to PDFs or document pages
-  $("a[href]").each((_, el) => {
-    const href = $(el).attr("href") ?? "";
-    const title = $(el).text().trim();
+  // TRAI release-publication pages use Drupal views:
+  //   .view-content ul.item-list > li
+  //     .title-number .field-content    -> full regulation/direction/order title
+  //     .release-date .field-content    -> date (dd/mm/yyyy)
+  //     .division-section .field-content -> topic (e.g. "Financial & Economic Analysis")
+  //     .download-field a[href]          -> PDF link(s) (may be multiple for amendments)
+  //
+  // We emit one DocumentLink per PDF <a>, tagged with the parent <li>'s title.
+  $(".view-content ul.item-list > li").each((_, li) => {
+    const liEl = $(li);
+    const title = liEl.find(".title-number .field-content").first().text().trim();
+    const releaseDate = liEl.find(".release-date .field-content").first().text().trim();
+    const section = liEl.find(".division-section .field-content").first().text().trim();
+    if (!title) return;
 
-    if (!href || !title) return;
-    if (title.length < 10) return; // skip nav links
-    if (!href.toLowerCase().endsWith(".pdf") && !href.includes("/sites/default/files/")) return;
+    liEl.find('a[href*="/sites/default/files/"], a[href$=".pdf"]').each((_, a) => {
+      const href = $(a).attr("href") ?? "";
+      if (!href) return;
+      const ariaLabel = $(a).attr("aria-label") ?? "";
+      // Amendment label is the span text ("First Amendment", "72nd Amendment", "Notification", etc.)
+      const labelSpan = $(a).parent().find("span").first().text().trim();
 
-    const fullUrl = href.startsWith("http") ? href : `${BASE_URL}${href}`;
-    const filename = basename(href.split("?")[0] ?? href) || `trai-doc-${links.length + 1}.pdf`;
+      const fullUrl = href.startsWith("http") ? href : `${BASE_URL}${href}`;
+      const filename =
+        basename(href.split("?")[0] ?? href) || `trai-doc-${links.length + 1}.pdf`;
+      if (links.some((l) => l.url === fullUrl)) return;
 
-    if (links.some((l) => l.url === fullUrl)) return;
+      // Compose a descriptive title: "<title> — <amendment-label>"
+      let composed = title;
+      if (labelSpan && !title.toLowerCase().includes(labelSpan.toLowerCase())) {
+        composed = `${title} — ${labelSpan}`;
+      }
+      if (releaseDate) composed += ` (${releaseDate})`;
+      if (section) composed += ` [${section}]`;
 
-    links.push({ title, url: fullUrl, category, filename });
+      // Prefer aria-label when it is substantially different (sometimes more descriptive)
+      const finalTitle = ariaLabel.length > composed.length + 20 ? ariaLabel : composed;
+
+      links.push({ title: finalTitle, url: fullUrl, category, filename });
+    });
   });
+
+  // Fallback for pages without the standard Drupal views structure: scan anchors directly.
+  if (links.length === 0) {
+    $("a[href]").each((_, el) => {
+      const href = $(el).attr("href") ?? "";
+      const title = $(el).text().trim();
+      if (!href || !title || title.length < 10) return;
+      if (!href.toLowerCase().endsWith(".pdf") && !href.includes("/sites/default/files/")) return;
+      const fullUrl = href.startsWith("http") ? href : `${BASE_URL}${href}`;
+      const filename = basename(href.split("?")[0] ?? href) || `trai-doc-${links.length + 1}.pdf`;
+      if (links.some((l) => l.url === fullUrl)) return;
+      links.push({ title, url: fullUrl, category, filename });
+    });
+  }
 
   return links;
 }
@@ -194,7 +234,8 @@ async function scrapeAllPortals(): Promise<DocumentLink[]> {
   const pages: Array<{ url: string; category: string }> = [
     { url: REGULATIONS_URL, category: "Regulations" },
     { url: DIRECTIONS_URL, category: "Directions" },
-    { url: ORDERS_URL, category: "Orders" },
+    { url: ORDERS_TELECOM_URL, category: "Orders" },
+    { url: ORDERS_BROADCASTING_URL, category: "Orders" },
   ];
 
   for (const page of pages) {
