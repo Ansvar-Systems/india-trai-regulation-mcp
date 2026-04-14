@@ -3,10 +3,11 @@ mcp_name: "India TRAI Telecom Regulation MCP"
 category: "regulation"
 
 sources:
-  - name: "TRAI Regulations, Directions & Orders"
+  - name: "TRAI Regulations"
     authority: "Telecom Regulatory Authority of India (TRAI)"
     official_portal: "https://www.trai.gov.in/release-publication/regulations"
     retrieval_method: "HTML_SCRAPE"
+    pagination: "Drupal `?page=N` walked to a 20-page hard cap; current archive uses 14 pages"
     format: "HTML + PDF"
     authentication: "none"
     update_frequency: "monthly"
@@ -15,8 +16,68 @@ sources:
       url: "https://www.trai.gov.in"
       summary: "Public TRAI telecom regulatory publications"
     coverage:
-      scope: "TRAI Regulations, Directions, Orders; Quality of Service Regulations; Telecom Consumer Protection Regulations; Unsolicited Commercial Communications Regulations (UCC); Consumer Grievance Redressal; Telecom Tariff Orders"
+      scope: "TRAI Regulations: Quality of Service, Consumer Protection, UCC, Interconnection, Number Portability, Tariff, Broadcasting"
       version: "Current"
-      item_count: "~100-150 regulations, ~200 directions"
+      item_count: "303 documents (28 frameworks, 275 circulars)"
+    languages:
+      - "en"
+
+  - name: "TRAI Directions"
+    authority: "Telecom Regulatory Authority of India (TRAI)"
+    official_portal: "https://www.trai.gov.in/release-publication/directions"
+    retrieval_method: "HTML_SCRAPE"
+    pagination: "Drupal `?page=N` walked to a 20-page hard cap; current archive uses 15 pages"
+    format: "HTML + PDF"
+    authentication: "none"
+    update_frequency: "monthly"
+    license:
+      type: "government_terms"
+      url: "https://www.trai.gov.in"
+      summary: "Public TRAI telecom regulatory publications"
+    coverage:
+      scope: "TRAI Directions to telecom service providers: call drop compliance, DLT/UCC enforcement, subscriber verification, 5G rollout, PoI congestion"
+      version: "Current"
+      item_count: "398 documents (56 frameworks, 342 circulars)"
+    languages:
+      - "en"
+
+  # NOTE: TRAI's `/release-publication/orders` path returns HTTP 404. "Orders"
+  # are published separately as Consolidated Tariff Orders for Telecom and
+  # Broadcasting. Both sub-portals are ingested and tagged `category = "Orders"`.
+  - name: "TRAI Consolidated Tariff Orders — Telecom"
+    authority: "Telecom Regulatory Authority of India (TRAI)"
+    official_portal: "https://www.trai.gov.in/release-publication/consolidated-tariff-orders/telecom"
+    retrieval_method: "HTML_SCRAPE"
+    pagination: "Single-page consolidated listing"
+    format: "HTML + PDF"
+    authentication: "none"
+    update_frequency: "monthly"
+    license:
+      type: "government_terms"
+      url: "https://www.trai.gov.in"
+      summary: "Public TRAI telecom regulatory publications"
+    coverage:
+      scope: "Consolidated tariff orders for telecom services (interconnect usage, national roaming, MNP processing, broadband disclosure)"
+      version: "Current"
+      item_count: "2 documents"
+    languages:
+      - "en"
+
+  - name: "TRAI Consolidated Tariff Orders — Broadcasting"
+    authority: "Telecom Regulatory Authority of India (TRAI)"
+    official_portal: "https://www.trai.gov.in/release-publication/consolidated-tariff-orders/broadcasting"
+    retrieval_method: "HTML_SCRAPE"
+    pagination: "Single-page consolidated listing"
+    format: "HTML + PDF"
+    authentication: "none"
+    update_frequency: "monthly"
+    license:
+      type: "government_terms"
+      url: "https://www.trai.gov.in"
+      summary: "Public TRAI telecom regulatory publications"
+    coverage:
+      scope: "Consolidated tariff orders for broadcasting and addressable systems (CAS, DPO, DAS)"
+      version: "Current"
+      item_count: "4 documents"
     languages:
       - "en"

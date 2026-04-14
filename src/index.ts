@@ -206,10 +206,14 @@ function textContent(data: unknown) {
   };
 }
 
-function errorContent(message: string) {
+type ErrorType = "NO_MATCH" | "INVALID_INPUT" | "INTERNAL_ERROR";
+
+function errorContent(errorType: ErrorType, message: string, sourceUrl?: string) {
   return {
     content: [{ type: "text" as const, text: message }],
     isError: true as const,
+    _error_type: errorType,
+    _meta: buildMeta(sourceUrl),
   };
 }
 
@@ -280,6 +284,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         return errorContent(
+          "NO_MATCH",
           `No regulation or direction found with reference: ${docId}. ` +
             "Use in_trai_search_regulations to find available references.",
         );
@@ -321,11 +326,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           data_source: "Telecom Regulatory Authority of India (TRAI)",
           source_url: SOURCE_URL,
           coverage: {
-            categories: `${stats.frameworks} TRAI regulation categories`,
-            regulations: `${stats.controls} regulations and directions`,
-            orders: `${stats.circulars} tariff orders and notices`,
+            categories: `${stats.frameworks} TRAI regulation categories (frameworks)`,
+            framework_scope_controls: `${stats.controls} auto-generated per-framework scope controls`,
+            documents: `${stats.circulars} regulations, directions, and orders (circulars)`,
+            total_documents: stats.frameworks + stats.circulars,
             jurisdictions: ["India"],
-            sectors: ["Telecom", "Broadband", "ISP", "Satellite"],
+            sectors: ["Telecom", "Broadband", "ISP", "Satellite", "Broadcasting"],
           },
           tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
           _meta: buildMeta(),
@@ -341,12 +347,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       default:
-        return errorContent(`Unknown tool: ${name}`);
+        return errorContent("INVALID_INPUT", `Unknown tool: ${name}`);
     }
   } catch (err) {
-    return errorContent(
-      `Error executing ${name}: ${err instanceof Error ? err.message : String(err)}`,
-    );
+    const message = err instanceof Error ? err.message : String(err);
+    // Zod validation errors map to INVALID_INPUT; everything else is internal
+    const errorType: ErrorType =
+      err instanceof z.ZodError ? "INVALID_INPUT" : "INTERNAL_ERROR";
+    return errorContent(errorType, `Error executing ${name}: ${message}`);
   }
 });
 

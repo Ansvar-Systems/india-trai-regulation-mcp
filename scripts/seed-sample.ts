@@ -236,7 +236,7 @@ const regulations: RegulationRow[] = [
       "subscribers on non-discriminatory terms; roaming tariffs are subject to TRAI ceiling rates; home " +
       "network TSP must clearly inform subscribers of applicable roaming rates before roaming commences; " +
       "data roaming speeds must not be artificially throttled relative to home network speeds; " +
-      "TSPs must ensure seamless handover across network boundaries. Monthly roaming quality reports " +
+      "TSPs must ensure uninterrupted handover across network boundaries. Monthly roaming quality reports " +
       "must be submitted to TRAI.",
     maturity_level: "Mandatory",
     priority: "Medium",

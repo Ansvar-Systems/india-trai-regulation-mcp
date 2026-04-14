@@ -1,8 +1,8 @@
 /**
  * Update data/coverage.json with current database statistics.
  *
- * Reads the SAMA SQLite database and writes a coverage summary file
- * used by the freshness checker, fleet manifest, and the sa_sama_about tool.
+ * Reads the TRAI SQLite database and writes a coverage summary file
+ * used by the freshness checker, fleet manifest, and the in_trai_about tool.
  *
  * Usage:
  *   npx tsx scripts/update-coverage.ts
@@ -49,11 +49,6 @@ async function main(): Promise<void> {
   const controls = (db.prepare("SELECT COUNT(*) AS n FROM controls").get() as { n: number }).n;
   const circulars = (db.prepare("SELECT COUNT(*) AS n FROM circulars").get() as { n: number }).n;
 
-  // Get last-inserted date if available
-  const latestCircular = db
-    .prepare("SELECT date FROM circulars ORDER BY date DESC LIMIT 1")
-    .get() as { date: string } | undefined;
-
   // Per-source counts for TRAI (Regulations/Directions/Orders)
   const bySource = db
     .prepare("SELECT category AS name, COUNT(*) AS n FROM circulars GROUP BY category")
@@ -63,15 +58,20 @@ async function main(): Promise<void> {
   const dirCount = bySource.find((s) => s.name === "Directions")?.n ?? 0;
   const orderCount = bySource.find((s) => s.name === "Orders")?.n ?? 0;
 
+  // last_fetched is the timestamp of THIS ingestion run, not the publication
+  // date of the latest TRAI document. The freshness checker compares this
+  // against `update_frequency` to detect stale ingestion (not stale upstream).
+  const fetchedAt = new Date().toISOString();
+
   const coverage: CoverageFile = {
-    generatedAt: new Date().toISOString(),
+    generatedAt: fetchedAt,
     mcp: "india-trai-regulation-mcp",
     version: "0.1.0",
     sources: [
       {
         name: "TRAI Regulations",
         url: "https://www.trai.gov.in/release-publication/regulations",
-        last_fetched: latestCircular?.date ?? null,
+        last_fetched: fetchedAt,
         update_frequency: "monthly",
         item_count: regCount,
         status: "current",
@@ -79,15 +79,18 @@ async function main(): Promise<void> {
       {
         name: "TRAI Directions",
         url: "https://www.trai.gov.in/release-publication/directions",
-        last_fetched: latestCircular?.date ?? null,
+        last_fetched: fetchedAt,
         update_frequency: "monthly",
         item_count: dirCount,
         status: "current",
       },
       {
-        name: "TRAI Tariff Orders (Telecom & Broadcasting)",
+        // The two TRAI sub-portals (consolidated-tariff-orders/{telecom,broadcasting})
+        // are merged into a single `category = "Orders"` row in the DB; we surface
+        // them as one source here. See COVERAGE.md for the per-portal split.
+        name: "TRAI Consolidated Tariff Orders (Telecom + Broadcasting)",
         url: "https://www.trai.gov.in/release-publication/consolidated-tariff-orders/telecom",
-        last_fetched: latestCircular?.date ?? null,
+        last_fetched: fetchedAt,
         update_frequency: "monthly",
         item_count: orderCount,
         status: "current",

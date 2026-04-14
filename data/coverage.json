@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-04-14T09:26:09.661Z",
+  "generatedAt": "2026-04-14T10:51:01.091Z",
   "mcp": "india-trai-regulation-mcp",
   "version": "0.1.0",
   "sources": [
     {
       "name": "TRAI Regulations",
       "url": "https://www.trai.gov.in/release-publication/regulations",
-      "last_fetched": "31/12/2002",
+      "last_fetched": "2026-04-14T10:51:01.091Z",
       "update_frequency": "monthly",
       "item_count": 275,
       "status": "current"
@@ -14,15 +14,15 @@
     {
       "name": "TRAI Directions",
       "url": "https://www.trai.gov.in/release-publication/directions",
-      "last_fetched": "31/12/2002",
+      "last_fetched": "2026-04-14T10:51:01.091Z",
       "update_frequency": "monthly",
       "item_count": 342,
       "status": "current"
     },
     {
-      "name": "TRAI Tariff Orders (Telecom & Broadcasting)",
+      "name": "TRAI Consolidated Tariff Orders (Telecom + Broadcasting)",
       "url": "https://www.trai.gov.in/release-publication/consolidated-tariff-orders/telecom",
-      "last_fetched": "31/12/2002",
+      "last_fetched": "2026-04-14T10:51:01.091Z",
       "update_frequency": "monthly",
       "item_count": 4,
       "status": "current"
