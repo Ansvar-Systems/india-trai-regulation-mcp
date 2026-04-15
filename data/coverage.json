@@ -1,30 +1,62 @@
 {
-  "generatedAt": "2026-04-14T10:51:01.091Z",
+  "schema_version": "1.0",
+  "generatedAt": "2026-04-14T21:00:00.000Z",
   "mcp": "india-trai-regulation-mcp",
+  "mcp_type": "regulatory_publications",
   "version": "0.1.0",
+  "scope_statement": "TRAI-published regulations, directions, and consolidated tariff/other orders for the Indian telecommunications and broadcasting sectors (current versions).",
+  "scope_exclusions": [
+    "TRAI consultation papers and responses (separate track)",
+    "DoT licences, NIA orders, and spectrum-auction notices (separate authority)",
+    "TDSAT and court orders (separate judicial/administrative track)",
+    "Hindi-only TRAI publications (English focus for v1)",
+    "Broadcasting tariff orders pre-2017 (patchy portal coverage)",
+    "TRAI Annual Reports and research studies (informational, not binding)"
+  ],
   "sources": [
     {
+      "id": "trai-regulations",
       "name": "TRAI Regulations",
+      "authority": "Telecom Regulatory Authority of India",
       "url": "https://www.trai.gov.in/release-publication/regulations",
-      "last_fetched": "2026-04-14T10:51:01.091Z",
+      "last_fetched": "2026-04-14",
+      "last_verified": "2026-04-14",
       "update_frequency": "monthly",
       "item_count": 275,
+      "expected_items": 275,
+      "measurement_unit": "regulations",
+      "verification_method": "page_scraped",
+      "completeness": "full",
       "status": "current"
     },
     {
+      "id": "trai-directions",
       "name": "TRAI Directions",
+      "authority": "Telecom Regulatory Authority of India",
       "url": "https://www.trai.gov.in/release-publication/directions",
-      "last_fetched": "2026-04-14T10:51:01.091Z",
+      "last_fetched": "2026-04-14",
+      "last_verified": "2026-04-14",
       "update_frequency": "monthly",
       "item_count": 342,
+      "expected_items": 342,
+      "measurement_unit": "directions",
+      "verification_method": "page_scraped",
+      "completeness": "full",
       "status": "current"
     },
     {
+      "id": "trai-consolidated-orders",
       "name": "TRAI Consolidated Tariff Orders (Telecom + Broadcasting)",
+      "authority": "Telecom Regulatory Authority of India",
       "url": "https://www.trai.gov.in/release-publication/consolidated-tariff-orders/telecom",
-      "last_fetched": "2026-04-14T10:51:01.091Z",
+      "last_fetched": "2026-04-14",
+      "last_verified": "2026-04-14",
       "update_frequency": "monthly",
       "item_count": 4,
+      "expected_items": 4,
+      "measurement_unit": "consolidated_orders",
+      "verification_method": "page_scraped",
+      "completeness": "full",
       "status": "current"
     }
   ],
@@ -32,5 +64,9 @@
     "frameworks": 86,
     "controls": 86,
     "circulars": 621
+  },
+  "summary": {
+    "total_items": 707,
+    "total_sources": 3
   }
 }

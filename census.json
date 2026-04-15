@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "mcp_name": "india-trai-regulation-mcp",
+  "mcp_type": "regulatory_publications",
+  "jurisdiction": "IN",
+  "jurisdiction_name": "India",
+  "authority": "Telecom Regulatory Authority of India (TRAI)",
+  "portal": "https://www.trai.gov.in",
+  "census_date": "2026-04-14",
+  "agent": "claude-opus-4-6",
+  "summary": {
+    "total_sources": 3,
+    "total_frameworks": 86,
+    "total_provisions": 86,
+    "total_circulars": 621,
+    "total_rows": 707,
+    "regulations": 275,
+    "directions": 342,
+    "consolidated_orders": 4,
+    "fully_ingested": 707,
+    "partial": 0,
+    "excluded": 0
+  },
+  "sources": [
+    {
+      "id": "trai-regulations",
+      "name": "TRAI Regulations",
+      "portal_url": "https://www.trai.gov.in/release-publication/regulations",
+      "retrieval_method": "html_scrape",
+      "update_frequency": "monthly",
+      "item_type": "regulations",
+      "document_count": 275,
+      "expected_items": 275,
+      "last_scraped": "2026-04-14",
+      "ingested_count": 275,
+      "completeness": "full"
+    },
+    {
+      "id": "trai-directions",
+      "name": "TRAI Directions",
+      "portal_url": "https://www.trai.gov.in/release-publication/directions",
+      "retrieval_method": "html_scrape",
+      "update_frequency": "monthly",
+      "item_type": "directions",
+      "document_count": 342,
+      "expected_items": 342,
+      "last_scraped": "2026-04-14",
+      "ingested_count": 342,
+      "completeness": "full"
+    },
+    {
+      "id": "trai-consolidated-orders",
+      "name": "TRAI Consolidated Tariff Orders (Telecom + Broadcasting)",
+      "portal_url": "https://www.trai.gov.in/release-publication/consolidated-tariff-orders/telecom",
+      "retrieval_method": "html_scrape",
+      "update_frequency": "monthly",
+      "item_type": "tariff_orders",
+      "document_count": 4,
+      "expected_items": 4,
+      "last_scraped": "2026-04-14",
+      "ingested_count": 4,
+      "completeness": "full"
+    }
+  ],
+  "framework_domains": [
+    { "domain": "Directions", "framework_count": 56 },
+    { "domain": "Regulations", "framework_count": 28 },
+    { "domain": "Orders", "framework_count": 2 }
+  ],
+  "publication_categories": [
+    { "category": "Directions", "count": 342 },
+    { "category": "Regulations", "count": 275 },
+    { "category": "Orders", "count": 4 }
+  ],
+  "highlighted_domains": [
+    "Quality of Service (QoS) and call-drop remedies",
+    "Interconnection usage charges (IUC) and tariff orders",
+    "Mobile Number Portability (MNP) processing",
+    "National roaming tariffs",
+    "Broadband speed disclosure",
+    "Unsolicited Commercial Communication (UCC) + DLT consent framework",
+    "5G rollout directions",
+    "Subscriber verification and Point-of-Interconnect (PoI) congestion",
+    "Net neutrality principles",
+    "Broadcasting carriage tariffs"
+  ],
+  "exclusions": [
+    "TRAI consultation papers and responses (separate track)",
+    "DoT licences and NIA orders (separate authority)",
+    "Spectrum-auction notices and TDSAT/court orders (separate tracks)",
+    "Hindi-only TRAI publications",
+    "Broadcasting tariff orders pre-2017 (patchy on portal)",
+    "TRAI Annual Reports and research studies (informational)"
+  ]
+}
